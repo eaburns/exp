@@ -489,6 +489,7 @@ func findPictformat(fs []render.Pictforminfo, depth byte) (render.Pictformat, er
 		want.AlphaMask = 0x00
 	}
 	for _, f := range fs {
+		fmt.Printf("f=%#v\n", f)
 		if f.Type == render.PictTypeDirect && f.Depth == depth && f.Direct == want {
 			return f.Id, nil
 		}
