@@ -33,6 +33,7 @@ type screenImpl struct {
 	atomWMProtocols    xproto.Atom
 	atomWMTakeFocus    xproto.Atom
 
+	pictformat16 render.Pictformat
 	pictformat24 render.Pictformat
 	pictformat32 render.Pictformat
 
@@ -350,6 +351,8 @@ func (s *screenImpl) NewWindow(opts *screen.NewWindowOptions) (screen.Window, er
 	switch s.xsi.RootDepth {
 	default:
 		return nil, fmt.Errorf("x11driver: unsupported root depth %d", s.xsi.RootDepth)
+	case 16:
+		pictformat = s.pictformat16
 	case 24:
 		pictformat = s.pictformat24
 	case 32:
@@ -442,6 +445,10 @@ func (s *screenImpl) initPictformats() error {
 	if err != nil {
 		return fmt.Errorf("x11driver: render.QueryPictFormats failed: %v", err)
 	}
+	s.pictformat16, err = findPictformat(pformats.Formats, 16)
+	if err != nil {
+		return err
+	}
 	s.pictformat24, err = findPictformat(pformats.Formats, 24)
 	if err != nil {
 		return err
@@ -465,7 +472,19 @@ func findPictformat(fs []render.Pictforminfo, depth byte) (render.Pictformat, er
 		AlphaShift: 24,
 		AlphaMask:  0xff,
 	}
-	if depth == 24 {
+	switch depth {
+	case 16:
+		want = render.Directformat{
+			RedShift:   8,
+			RedMask:    0x0f,
+			GreenShift: 4,
+			GreenMask:  0x0f,
+			BlueShift:  0,
+			BlueMask:   0x0f,
+			AlphaShift: 12,
+			AlphaMask:  0x0f,
+		}
+	case 24:
 		want.AlphaShift = 0
 		want.AlphaMask = 0x00
 	}
